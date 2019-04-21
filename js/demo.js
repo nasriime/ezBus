@@ -31,7 +31,7 @@ $(document).ready(function (e) {
           var childData = childSnapshot.val();
           body.vehicles[0].start_address.lon = childData.longitude;
           body.vehicles[0].start_address.lat = childData.latitude;
-          console.log('busDriver', childData);
+        //   console.log('busDriver', childData);
         });
     });
 
@@ -43,14 +43,14 @@ $(document).ready(function (e) {
               "id": childData.studentID,
               "name": childData.fullName,
               "address": {
-                "location_id": childData.address,
+                "location_id": childData.fullName,
                 "lon": childData.longitude,
                 "lat": childData.latitude
               }
           })
           console.log('student', childData);
-          console.log('body', body);
         });
+        // console.log('body', body);
     });
 
     $(".tab-content").css("display", "none");
@@ -392,15 +392,34 @@ function setupRouteOptimizationAPI(map, ghOptimization, ghRouting) {
         //     .then(optimizeResponse)
         //     .catch(optimizeError);
 
-        $.getJSON("route-optimization-examples/tsp_lonlat_new.json?v=" + exampleVersion, function (jsonData) {
-            console.log(jsonData);
-            clearMap();
-            map.setView([30, 31], 8);
-            $("#vrp-response").text("Calculating ...");
-            ghOptimization.doRequest(jsonData)
-                .then(optimizeResponse)
-                .catch(optimizeError);
-        });
+        $.ajax({
+            method: "POST",
+            url: "https://graphhopper.com/api/1/vrp/optimize?key=0b62a5f8-f56f-4f33-a54d-9d31d165ffb8",
+            dataType: "xml/html/script/json", // expected format for response
+            contentType: "application/json", // send as JSON
+            data: JSON.stringify(body),
+          })
+          .done(function(res){
+            $.ajax({
+                method: "GET",
+                url: "https://graphhopper.com/api/1/vrp/solution/"+ res.job_id +"?key=0b62a5f8-f56f-4f33-a54d-9d31d165ffb8",
+              })
+                .done(function( res ) {
+                    ghOptimization.doRequest(res)
+                    .then(optimizeResponse)
+                    .catch(optimizeError);
+                });
+          });
+
+        // $.getJSON("route-optimization-examples/tsp_lonlat_new.json?v=" + exampleVersion, function (jsonData) {
+        //     console.log(jsonData);
+        //     clearMap();
+        //     map.setView([30, 31], 8);
+        //     $("#vrp-response").text("Calculating ...");
+        //     ghOptimization.doRequest(jsonData)
+        //         .then(optimizeResponse)
+        //         .catch(optimizeError);
+        // });
     };
 
     $("#vrp_clear_button").click(clearMap);
